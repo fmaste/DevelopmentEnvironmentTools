@@ -2,6 +2,13 @@
 
 # Script to create an Ubuntu Server virtual machine for development.
 
+# CHECK CPU
+# ----------------------------------------------------------------------------
+
+# On AMD look for svm (secure virtual machine)
+# Intel's equivalent is vmx.
+# TODO: VIRTUALIZATION_FLAGS=`grep -E '^flags.*(vmx|svm)' /proc/cpuinfo`
+
 # PARAMS
 # -----------------------------------------------------------------------------
 
