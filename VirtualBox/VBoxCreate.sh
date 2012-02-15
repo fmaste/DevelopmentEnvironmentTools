@@ -112,10 +112,8 @@ VBoxManage modifyvm $MACHINE_NAME --clipboard disabled
 # To be able to disable USB, make the mouse and keyboard use PS2 instead.
 VBoxManage modifyvm $MACHINE_NAME --mouse ps2
 VBoxManage modifyvm $MACHINE_NAME --keyboard ps2
-
 # This option enables or disables the VM's virtual USB controller.
 VBoxManage modifyvm $MACHINE_NAME --usb off
-
 # This option enables or disables the VM's virtual USB 2.0 controller.
 VBoxManage modifyvm $MACHINE_NAME --usbehci off
 
