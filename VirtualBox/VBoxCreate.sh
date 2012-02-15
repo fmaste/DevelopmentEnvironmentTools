@@ -121,6 +121,7 @@ VBoxManage modifyvm $MACHINE_NAME --usbehci off
 # instead of local (host) time. This affects how the virtual real-time clock 
 # (RTC) operates and may be useful for Unix-like guest operating systems, which 
 # typically expect the hardware clock to be set to UTC.
+# This is also VirtualBox default setting.
 VBoxManage modifyvm $MACHINE_NAME --rtcuseutc on
 
 # BIOS
