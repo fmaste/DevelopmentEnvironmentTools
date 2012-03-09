@@ -1,47 +1,59 @@
 {-# LANGUAGE TemplateHaskell #-}
 module Query (
-	getFromTableWhere
+	createFunctionFromTableWhere
 ) where
 
 -------------------------------------------------------------------------------
 
 -- Import Template Haskell interfaces
 import Data.Maybe
+import Control.Monad
 import Database
 import Language.Haskell.TH
 
 -------------------------------------------------------------------------------
 
 createFunctionFromTableWhere :: Name -> (Database, Table) -> [(Field, Ordering)] -> Q [Dec]
-createFunctionFromTableWhere funName (Database dbName _, Table tableName _) fs = return
-	[
-		FunD funName 
-	]
+createFunctionFromTableWhere funName (Database dbName _, Table tableName _) fs = do
+	parametersNames <- mapM (parameterName . fst) fs
+	(fts, ords) <- return $ unzip fs
+	forBody <- return $ zip3 parametersNames fts ords
+	return 
+		[
+			SigD funName $ functionType (map (parameterType . fst) fs) ''String,
+			FunD funName [Clause (map VarP parametersNames)] (functionBody tableName forBody) [] 
+		]
 
--- Return a function that receives a param of some type.
--- And returns a string that queries that part.
--- For example:
--- 	fun :: Int -> String
---	fun num = "NUM = " ++ (show num)
-getFunctionForType :: (Field, Ordering) -> Q Exp
-getFunctionForType (Field fieldName fieldType, ord) = [| 
-		\x -> fieldName ++ " " ++ ($(getFunctionForType2 (fieldType, ord)) x) 
+
+parameterType :: Field -> Type
+parameterType (FieldType ValueBool) = ConT ''Bool 
+parameterType (FieldType ValueInt) = ConT ''Int
+parameterType (FieldType ValueString) = ConT ''String
+parameterType (MaybeFieldType valueType) = AppT (ConT ''Maybe) (parameterType $ FieldType valueType)
+
+-- f :: Int -> String
+-- (AppT (AppT ArrowT (ConT Int)) (ConT String)
+-- g :: Int -> String -> Bool
+-- (AppT (AppT ArrowT (ConT Int)) (AppT (AppT ArrowT (ConT String)) (ConT Bool)))
+functionType :: [Type] -> Type -> Type
+functionType [] result = result
+functionType (t:ts) result = AppT (AppT ArrowT t) (functionType ts result)
+
+parameterName :: Type -> Q Name
+parameterName (FieldType ValueBool) = do
+	name <- newName "param" 
+	return name
+parameterPattern (MaybeFieldType valueType) = parameterPattern (FieldType valueType)
+
+functionBody :: String -> [(Name, Field, Ordering)] -> Q Exp
+functionBody tableName _ = 
+	[|
+		(queryPrefix tableName) ++ ";"
 	|]
 
-getFunctionForType2 :: (FieldType, Ordering) -> Q Exp
-getFunctionForType2 (FieldType valueType, ord) = [|
-		\x -> 
+queryPrefix :: String -> String
+queryPrefix tableName = "SELECT * FROM " ++ tableName
 
-	|]
-getFunctionForType2 (MaybeFieldType valueType, ord) = [|
-		\x -> if isNothing x 
-			then if ord == EQ
-				then "IS NULL"
-				else if ord == NEQ
-					then "IS NOT NULL"
-					else (error $ "using " ++ (show ord) ++ " with null.")
-			else ($(getFunctionForType2 (FieldType valueType, ord)) x)
-	|]
 
 test :: Database -> IO ()
 test db = do
