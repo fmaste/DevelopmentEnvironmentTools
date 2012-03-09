@@ -5,7 +5,6 @@ module Query (
 
 -------------------------------------------------------------------------------
 
--- Import Template Haskell interfaces
 import Data.Maybe
 import Control.Monad
 import Database
@@ -14,22 +13,35 @@ import Language.Haskell.TH
 -------------------------------------------------------------------------------
 
 createFunctionFromTableWhere :: Name -> (Database, Table) -> [(Field, Ordering)] -> Q [Dec]
-createFunctionFromTableWhere funName (Database dbName _, Table tableName _) fs = do
-	parametersNames <- mapM (parameterName . fst) fs
-	(fts, ords) <- return $ unzip fs
-	forBody <- return $ zip3 parametersNames fts ords
+createFunctionFromTableWhere funName (Database dbName _, Table tableName _) fos = do
+	let (fields, ords) = unzip fos
+	paramsNames <- mapM parameterName fields
+	let patterns = map VarP paramsNames
+	let paramsTypes = map parameterType fields
+	let funType = functionType paramsTypes (ConT ''String)
+	funBody <- functionBody tableName $ zip3 paramsNames fields ords
 	return 
 		[
-			SigD funName $ functionType (map (parameterType . fst) fs) ''String,
-			FunD funName [Clause (map VarP parametersNames)] (functionBody tableName forBody) [] 
+			functionSignature funName funType,
+			FunD funName [Clause patterns funBody []] 
 		]
 
+parameterName :: Field -> Q Name
+parameterName (Field n (FieldType _)) = do
+	name <- newName n
+	return name
+parameterPattern (MaybeFieldType valueType) = 
+	parameterPattern (FieldType valueType)
 
 parameterType :: Field -> Type
-parameterType (FieldType ValueBool) = ConT ''Bool 
-parameterType (FieldType ValueInt) = ConT ''Int
-parameterType (FieldType ValueString) = ConT ''String
-parameterType (MaybeFieldType valueType) = AppT (ConT ''Maybe) (parameterType $ FieldType valueType)
+parameterType (Field n (FieldType ValueBool)) = ConT ''Bool 
+parameterType (Field n (FieldType ValueInt)) = ConT ''Int
+parameterType (Field n (FieldType ValueString)) = ConT ''String
+parameterType (Field n (MaybeFieldType valueType)) = 
+	AppT (ConT ''Maybe) (parameterType $ Field n $ FieldType valueType)
+
+functionSignature :: Name -> Type -> Dec
+functionSignature n t = SigD n t
 
 -- f :: Int -> String
 -- (AppT (AppT ArrowT (ConT Int)) (ConT String)
@@ -39,26 +51,13 @@ functionType :: [Type] -> Type -> Type
 functionType [] result = result
 functionType (t:ts) result = AppT (AppT ArrowT t) (functionType ts result)
 
-parameterName :: Type -> Q Name
-parameterName (FieldType ValueBool) = do
-	name <- newName "param" 
-	return name
-parameterPattern (MaybeFieldType valueType) = parameterPattern (FieldType valueType)
-
-functionBody :: String -> [(Name, Field, Ordering)] -> Q Exp
-functionBody tableName _ = 
-	[|
-		(queryPrefix tableName) ++ ";"
-	|]
+functionBody :: String -> [(Name, Field, Ordering)] -> Q Body
+functionBody tableName _ = do
+	code <- [|
+			(queryPrefix tableName) ++ ";"
+		|]
+	return $ NormalB code
 
 queryPrefix :: String -> String
 queryPrefix tableName = "SELECT * FROM " ++ tableName
-
-
-test :: Database -> IO ()
-test db = do
-	code <- runQ $ [| db |]
-	putStrLn (pprint code)
-	putStrLn (show code)
-	return ()
 
