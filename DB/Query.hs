@@ -27,18 +27,16 @@ createFunctionFromTableWhere funName (Database dbName _, Table tableName _) fos 
 		]
 
 parameterName :: Field -> Q Name
-parameterName (Field n (FieldType _)) = do
+parameterName (Field n _) = do
 	name <- newName n
 	return name
-parameterPattern (MaybeFieldType valueType) = 
-	parameterPattern (FieldType valueType)
 
 parameterType :: Field -> Type
-parameterType (Field n (FieldType ValueBool)) = ConT ''Bool 
-parameterType (Field n (FieldType ValueInt)) = ConT ''Int
-parameterType (Field n (FieldType ValueString)) = ConT ''String
-parameterType (Field n (MaybeFieldType valueType)) = 
-	AppT (ConT ''Maybe) (parameterType $ Field n $ FieldType valueType)
+parameterType (Field n (FieldType Null ValueBool)) = ConT ''Bool 
+parameterType (Field n (FieldType Null ValueInt)) = ConT ''Int
+parameterType (Field n (FieldType Null ValueString)) = ConT ''String
+parameterType (Field n (FieldType NotNull valueType)) = 
+	AppT (ConT ''Maybe) (parameterType $ Field n $ FieldType Null valueType)
 
 functionSignature :: Name -> Type -> Dec
 functionSignature n t = SigD n t

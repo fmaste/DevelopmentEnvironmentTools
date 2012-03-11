@@ -11,7 +11,8 @@ module Database (
         Table (Table),
         FieldName,
         Field (Field),
-        FieldType (FieldType, MaybeFieldType),
+	Nullable (Null, NotNull),
+        FieldType (FieldType),
         ValueType (ValueBool, ValueInt, ValueString)
 ) where
 
@@ -47,9 +48,11 @@ type FieldName = String
 
 data Field = Field FieldName FieldType
 
+data Nullable = Null | NotNull
+
 -- The field types are bool, int and string. 
 -- Can be not null or nullable.
-data FieldType = FieldType ValueType | MaybeFieldType ValueType
+data FieldType = FieldType Nullable ValueType
 
 data ValueType = ValueBool | ValueInt | ValueString
 
