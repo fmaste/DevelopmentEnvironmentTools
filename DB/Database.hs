@@ -1,5 +1,4 @@
 module Database (
-	Permission,
 	ServerHost,
 	Server (Server),
 	User,
@@ -17,9 +16,6 @@ module Database (
 ) where
 
 -------------------------------------------------------------------------------
-
--- Read-write or read-only.
-data Permission = RW | RO
 
 -- A server has a host and databases associated.
 type ServerHost = String
@@ -55,4 +51,7 @@ data Nullable = Null | NotNull
 data FieldType = FieldType Nullable ValueType
 
 data ValueType = ValueBool | ValueInt | ValueString
+
+-- Read-write or read-only.
+data Permission = RW | RO
 
