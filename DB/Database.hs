@@ -1,9 +1,7 @@
 module Database (
+	ServerName,
 	ServerHost,
 	Server (Server),
-	User,
-	Password,
-	ServerDatabase (ServerDatabase),
         DatabaseName,
         Database (Database),
         TableName,
@@ -12,22 +10,21 @@ module Database (
         Field (Field),
 	Nullable (Null, NotNull),
         FieldType (FieldType),
-        ValueType (ValueBool, ValueInt, ValueString)
+        ValueType (ValueBool, ValueInt, ValueString),
+	Permission (RW, RO),
+	User,
+	Password,
+	ServerAccess (ServerAccess)
 ) where
 
 -------------------------------------------------------------------------------
 
 -- A server has a host and databases associated.
+type ServerName = String
+
 type ServerHost = String
 
-data Server = Server ServerHost [ServerDatabase]
-
--- The server databases have a user and a password.
-type User = String
-
-type Password = String
-
-data ServerDatabase = ServerDatabase Database User Password
+data Server = Server ServerName ServerHost [Database]
 
 -- The database has a name and tables.
 type DatabaseName = String
@@ -54,4 +51,11 @@ data ValueType = ValueBool | ValueInt | ValueString
 
 -- Read-write or read-only.
 data Permission = RW | RO
+
+-- The server has a user and a password.
+type User = String
+
+type Password = String
+
+data ServerAccess = ServerAccess Server User Password
 
