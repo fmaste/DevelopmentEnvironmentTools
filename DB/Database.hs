@@ -46,6 +46,7 @@ data FieldType = FieldType Nullable ValueType
 data Nullable = Null | NotNull
 
 data ValueType = ValueBool | ValueInt | ValueString
+-- A foreign key is a relation between two fields.
 data FK = FK Field Field
 	deriving (Show, Read, Eq, Ord)
 
