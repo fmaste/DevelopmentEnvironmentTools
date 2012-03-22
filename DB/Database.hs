@@ -32,7 +32,8 @@ type DatabaseName = String
 
 data Database = Database DatabaseName [Table]
 
--- Every table has a name a fields.
+-- Every table has a name and fields.
+-- This is the name as used for the SQL queries.
 type TableName = String
 
 data Table = Table TableName [Field]
