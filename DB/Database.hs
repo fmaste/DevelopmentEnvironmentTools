@@ -1,7 +1,4 @@
 module Database (
-	ServerName,
-	ServerHost,
-	Server (Server),
         DatabaseName,
         Database (Database),
         TableName,
@@ -11,20 +8,17 @@ module Database (
         FieldType (FieldType),
 	Nullable (Null, NotNull),
         ValueType (ValueBool, ValueInt, ValueString),
+	ServerName,
+	ServerHost,
+	Server (Server),
 	Permission (RW, RO),
 	User,
 	Password,
 	ServerAccess (ServerAccess)
 ) where
 
+-- Data structure.
 -------------------------------------------------------------------------------
-
--- A server has a host and databases associated.
-type ServerName = String
-
-type ServerHost = String
-
-data Server = Server ServerName ServerHost [Database]
 
 -- The database has a name and tables.
 -- This is the name as used for the SQL queries.
@@ -51,6 +45,15 @@ data FieldType = FieldType Nullable ValueType
 data Nullable = Null | NotNull
 
 data ValueType = ValueBool | ValueInt | ValueString
+
+-------------------------------------------------------------------------------
+
+-- A server has a host and databases associated.
+type ServerName = String
+
+type ServerHost = String
+
+data Server = Server ServerName ServerHost [Database]
 
 -- Read-write or read-only.
 data Permission = RW | RO
