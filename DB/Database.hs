@@ -39,6 +39,7 @@ type TableName = String
 data Table = Table TableName [Field]
 
 -- A field has a name and a type.
+-- This is the name as used for the SQL queries.
 type FieldName = String
 
 data Field = Field FieldName FieldType
