@@ -1,4 +1,8 @@
+{-# LANGUAGE TemplateHaskell #-}
 module Database (
+	-- Export what is needed to use it.
+	Q,
+	Dec,
         DatabaseName,
         Database (Database),
         TableName,
@@ -17,6 +21,8 @@ module Database (
 	Password,
 	ServerAccess (ServerAccess)
 ) where
+
+import Language.Haskell.TH
 
 -- Data structure.
 -------------------------------------------------------------------------------
