@@ -3,6 +3,7 @@ module Database (
 	-- Export what is needed to use it.
 	Q,
 	Dec,
+	-- The data structure only types.
         DatabaseName,
         Database (Database),
         TableName,
