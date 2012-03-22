@@ -8,6 +8,7 @@ module Database (
         FieldType (FieldType),
 	Nullable (Null, NotNull),
         ValueType (ValueBool, ValueInt, ValueString),
+	FK (FK),
 	ServerName,
 	ServerHost,
 	Server (Server),
@@ -45,6 +46,8 @@ data FieldType = FieldType Nullable ValueType
 data Nullable = Null | NotNull
 
 data ValueType = ValueBool | ValueInt | ValueString
+data FK = FK Field Field
+	deriving (Show, Read, Eq, Ord)
 
 -------------------------------------------------------------------------------
 
