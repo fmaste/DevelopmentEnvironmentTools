@@ -8,8 +8,8 @@ module Database (
         Table (Table),
         FieldName,
         Field (Field),
-	Nullable (Null, NotNull),
         FieldType (FieldType),
+	Nullable (Null, NotNull),
         ValueType (ValueBool, ValueInt, ValueString),
 	Permission (RW, RO),
 	User,
@@ -44,11 +44,11 @@ type FieldName = String
 
 data Field = Field FieldName FieldType
 
-data Nullable = Null | NotNull
-
 -- The field types are bool, int and string. 
 -- Can be not null or nullable.
 data FieldType = FieldType Nullable ValueType
+
+data Nullable = Null | NotNull
 
 data ValueType = ValueBool | ValueInt | ValueString
 
