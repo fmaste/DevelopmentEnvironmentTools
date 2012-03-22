@@ -23,7 +23,10 @@ module Database (
 	ServerAccess (ServerAccess)
 ) where
 
+-------------------------------------------------------------------------------
+
 import Language.Haskell.TH
+import qualified Data.Map as Map
 
 -- Data structure.
 -------------------------------------------------------------------------------
@@ -82,4 +85,28 @@ type User = String
 type Password = String
 
 data ServerAccess = ServerAccess Server User Password
+
+-- Data Structure Description
+-------------------------------------------------------------------------------
+
+data DB = DB Databases Tables Fields
+type Databases = Map.Map Name Database
+type Tables = Map.Map Name Table
+type Fields = Map.Map Name Field
+
+{-
+createDb :: Name -> Q [Dec] -> Q [Dec]
+createDb name decs' = do
+	decs <- runQ decs'
+	let db = foldl addToDb (DB Map.empty Map.empty Map.empty) decs
+	let dbDec = [
+		SigD name (ConT 'DB),
+		FunD name [Clause [] (NormalB dbBody) []]
+		]
+	return (dbDec:decs)
+
+addToDb :: DB -> Dec -> DB
+addToDb db (FunD name clauses) = db
+addToDb db _ = db
+-}
 
