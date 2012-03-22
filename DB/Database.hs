@@ -27,6 +27,7 @@ type ServerHost = String
 data Server = Server ServerName ServerHost [Database]
 
 -- The database has a name and tables.
+-- This is the name as used for the SQL queries.
 type DatabaseName = String
 
 data Database = Database DatabaseName [Table]
