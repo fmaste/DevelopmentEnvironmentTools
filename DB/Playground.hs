@@ -10,13 +10,15 @@ import Language.Haskell.TH
 
 -------------------------------------------------------------------------------
 
-caca = Database "caca" []
+database = Database "database" [table]
+
+table = Table "table" []
 
 main :: IO ()
 main = do
 	putStrLn play
 
 play :: String
-play = $(stringE . show =<< reify 'caca)
+play = $(stringE . show =<< reify 'database)
 	
 
