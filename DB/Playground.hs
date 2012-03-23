@@ -16,9 +16,17 @@ table = Table "table" []
 
 main :: IO ()
 main = do
-	putStrLn play
+	putStrLn showPrint
+	putStrLn prettyPrint
+	putStrLn reification
 
-play :: String
-play = $(stringE . show =<< reify 'database)
+showPrint :: String
+showPrint = $([d| database = Database "database" [table] |] >>= stringE . show)
+
+prettyPrint :: String
+prettyPrint = $([d| database = Database "database" [table] |] >>= stringE . pprint)
+
+reification :: String
+reification = $(reify 'database >>= stringE . show)
 	
 
