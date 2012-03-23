@@ -25,6 +25,7 @@ module Database (
 
 -------------------------------------------------------------------------------
 
+import Control.Monad
 import Language.Haskell.TH
 import qualified Data.Map as Map
 
@@ -89,24 +90,58 @@ data ServerAccess = ServerAccess Server User Password
 -- Data Structure Description
 -------------------------------------------------------------------------------
 
+{--
+
 data DB = DB Databases Tables Fields
 type Databases = Map.Map Name Database
 type Tables = Map.Map Name Table
 type Fields = Map.Map Name Field
 
-{-
 createDb :: Name -> Q [Dec] -> Q [Dec]
 createDb name decs' = do
 	decs <- runQ decs'
-	let db = foldl addToDb (DB Map.empty Map.empty Map.empty) decs
+	db <- foldM addDecToDb (DB Map.empty Map.empty Map.empty) decs
 	let dbDec = [
 		SigD name (ConT 'DB),
-		FunD name [Clause [] (NormalB dbBody) []]
+		FunD name [Clause [] (NormalB $ LitE $ IntegerL 1) []]
 		]
-	return (dbDec:decs)
+	return (dbDec ++ decs)
 
-addToDb :: DB -> Dec -> DB
-addToDb db (FunD name clauses) = db
-addToDb db _ = db
--}
+addDecToDb :: DB -> Dec -> Q DB
+addDecToDb db (ValD (VarP name) (NormalB exp) []) = addValDToDb db name exp
+addDecToDb db _ = return db
+
+addValDToDb :: DB -> Name -> Exp -> Q DB
+addValDToDb db name exp = do
+	info <- reify name
+	case info of
+		(VarI _ t _ _) -> addVarIToDb db name exp t
+		_ -> return db
+
+addVarIToDb :: DB -> Name -> Exp -> Type -> Q DB
+addVarIToDb db name exp' t = do
+	let exp = return exp'
+	let databaseName = ('Database)
+	let tableName = ('Table)
+	let fieldName = ('Field)
+	let fkName = ('FK)
+	case t of
+		databaseName -> return $ addDatabaseToDb db name $exp 
+		tableName -> return $ addTableToDb db name $exp
+		fieldName -> return $ addFieldToDb db name $exp
+		fkName -> return $ addFKToDb db name $exp
+
+addDatabaseToDb :: DB -> Name -> Database -> DB
+addDatabaseToDb db name _ = db
+
+addTableToDb :: DB -> Name -> Table -> DB
+addTableToDb db name _ = db
+
+addFieldToDb :: DB -> Name -> Field -> DB
+addFieldToDb db name _ = db
+
+addFKToDb :: DB -> Name -> FK -> DB
+addFKToDb db name _ = db
+
+--}
 
