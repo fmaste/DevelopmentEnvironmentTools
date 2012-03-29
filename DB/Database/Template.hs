@@ -32,39 +32,51 @@ createDb name decs' = do
 		]
 	return (dbDec ++ decs)
 
-addDec :: DB -> Dec -> Q DB
-addDec db (ValD (VarP name) (NormalB exp) []) = addValDToDb db name exp
-addDec db _ = return db
+addDec :: Dec -> Q [Dec]
+addDec (ValD (VarP name) (NormalB exp) []) = addValD name
+addDec _ = return []
 
-addValDToDb :: DB -> Name -> Exp -> Q DB
-addValDToDb db name exp = do
+addValD :: Name -> Q [Dec]
+addValD name = do
 	info <- reify name
 	case info of
-		(VarI _ t _ _) -> addVarIToDb db name exp t
-		_ -> return db
+		(VarI _ t _ _) -> addVarI name t
+		_ -> return []
 
-addVarIToDb :: DB -> Name -> Exp -> Type -> Q DB
-addVarIToDb db name exp' t = do
-	let exp = return exp'
+addVarI :: Name -> Type -> Q [Dec]
+addVarI name t = do
 	let databaseName = ('DB.Database)
 	let tableName = ('DB.Table)
 	let fieldName = ('DB.Field)
 	let fkName = ('DB.FK)
 	case t of
-		databaseName -> return $ addDatabaseToDb db name $exp
-		tableName -> return $ addTableToDb db name $exp
-		fieldName -> return $ addFieldToDb db name $exp
-		fkName -> return $ addFKToDb db name $exp
+		databaseName -> addDatabase' name
+		tableName -> addTable' name
+		fieldName -> addField' name
+		fkName -> addFK' name
+		_ -> return []
 
-addDatabaseToDb :: DB -> Name -> DB.Database -> DB
-addDatabaseToDb db name _ = db
+addDatabase' :: Name -> Q [Dec]
+addDatabase' name = return []
 
-addTableToDb :: DB -> Name -> DB.Table -> DB
-addTableToDb db name _ = db
+addDatabase :: DB -> DB.Database -> DB
+addDatabase (DB.Database databaseName tables) = databaseName
 
-addFieldToDb :: DB -> Name -> DB.Field -> DB
-addFieldToDb db name _ = db
+addTable' :: Name -> Q [Dec]
+addTable' name = return []
 
-addFKToDb :: DB -> Name -> DB.FK -> DB
-addFKToDb db name _ = db
+addTable :: DB -> DB.Table -> DB
+addTable db (DB.Table tableName fields) = db
+
+addField' :: Name -> Q [Dec]
+addField' name = return []
+
+addField :: DB -> DB.Field -> DB
+addField db (DB.Field fieldName fieldType) = db
+
+addFK' :: Name -> Q [Dec]
+addFK' name = return []
+
+addFK :: DB -> DB.FK -> DB
+addFK fk = "FK"
 
