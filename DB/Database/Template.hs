@@ -4,7 +4,7 @@ module Database.Template (
 	Q,
 	Dec,
 	-- Everything else.
-	DB (DB),
+	Template (Template),
 	createDb
 ) where
 
@@ -17,33 +17,50 @@ import Language.Haskell.TH
 
 -------------------------------------------------------------------------------
 
-data DB = DB Databases Tables Fields
+data Template = Template Databases Tables Fields
 type Databases = Map.Map Name DB.Database
 type Tables = Map.Map Name DB.Table
 type Fields = Map.Map Name DB.Field
 
+zeroTemplate :: Template
+zeroTemplate = Template Map.empty Map.empty Map.empty
+
+addDatabase :: DB.Database -> Template -> Template
+addDatabase (DB.Database databaseName tables) tp = tp
+
+addTable :: DB.Table -> Template -> Template
+addTable (DB.Table tableName fields) tp = tp
+
+addField :: DB.Field -> Template -> Template
+addField (DB.Field fieldName fieldType) tp = tp
+
+addFK :: DB.FK -> Template -> Template
+addFK _ tp = tp
+
+-------------------------------------------------------------------------------
+
 createDb :: Name -> Q [Dec] -> Q [Dec]
 createDb name decs' = do
 	decs <- runQ decs'
-	--db <- foldM addDecToDb (DB Map.empty Map.empty Map.empty) decs
+	--db <- foldM addDecToDb zeroTemplate decs
 	let dbDec = [
-		--SigD name (ConT 'DB),
+		SigD name (ConT 'Template)
 		--FunD name [Clause [] (NormalB $ LitE 1) []]
 		]
 	return (dbDec ++ decs)
 
-addDec :: Dec -> Q [Dec]
+addDec :: Dec -> Q [Exp]
 addDec (ValD (VarP name) (NormalB exp) []) = addValD name
 addDec _ = return []
 
-addValD :: Name -> Q [Dec]
+addValD :: Name -> Q [Exp]
 addValD name = do
 	info <- reify name
 	case info of
 		(VarI _ t _ _) -> addVarI name t
 		_ -> return []
 
-addVarI :: Name -> Type -> Q [Dec]
+addVarI :: Name -> Type -> Q [Exp]
 addVarI name t = do
 	let databaseName = ('DB.Database)
 	let tableName = ('DB.Table)
@@ -56,27 +73,21 @@ addVarI name t = do
 		fkName -> addFK' name
 		_ -> return []
 
-addDatabase' :: Name -> Q [Dec]
-addDatabase' name = return []
+addDatabase' :: Name -> Q [Exp]
+addDatabase' name = add' 'addDatabase name
 
-addDatabase :: DB -> DB.Database -> DB
-addDatabase (DB.Database databaseName tables) = databaseName
+addTable' :: Name -> Q [Exp]
+addTable' name = add' 'addTable name
 
-addTable' :: Name -> Q [Dec]
-addTable' name = return []
+addField' :: Name -> Q [Exp]
+addField' name = add' 'addField name
 
-addTable :: DB -> DB.Table -> DB
-addTable db (DB.Table tableName fields) = db
+addFK' :: Name -> Q [Exp]
+addFK' name = add' 'addFK name 
 
-addField' :: Name -> Q [Dec]
-addField' name = return []
-
-addField :: DB -> DB.Field -> DB
-addField db (DB.Field fieldName fieldType) = db
-
-addFK' :: Name -> Q [Dec]
-addFK' name = return []
-
-addFK :: DB -> DB.FK -> DB
-addFK fk = "FK"
+-- Return and expression that is the addSomething function partially applied.
+-- The expressions are of type (Template -> Template)
+add' :: Name -> Name -> Q [Exp]
+add' functionName name = return $ [AppE (VarE functionName) (VarE name)]
+	--return [ValD (VarP name') (NormalB body) []]
 
