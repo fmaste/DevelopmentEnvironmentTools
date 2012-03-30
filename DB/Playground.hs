@@ -19,6 +19,8 @@ main = do
 	putStrLn showPrint
 	putStrLn prettyPrint
 	putStrLn reification
+	putStrLn app
+	putStrLn (show $ mkName "function")
 
 showPrint :: String
 showPrint = $([d| database = Database "database" [table] |] >>= stringE . show)
@@ -28,5 +30,10 @@ prettyPrint = $([d| database = Database "database" [table] |] >>= stringE . ppri
 
 reification :: String
 reification = $(reify 'database >>= stringE . show)
+
+add :: Int -> Int -> Int
+add a b = a + b
 	
+app :: String
+app = $([d| result = add 1 2 |] >>= stringE . show)
 
