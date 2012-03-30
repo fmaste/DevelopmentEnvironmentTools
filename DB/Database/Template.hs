@@ -11,6 +11,7 @@ module Database.Template (
 -------------------------------------------------------------------------------
 
 import Control.Monad
+import Data.List (mapAccumL)
 import qualified Database as DB
 import qualified Data.Map as Map
 import Language.Haskell.TH
@@ -40,14 +41,29 @@ addFK _ tp = tp
 -------------------------------------------------------------------------------
 
 createDb :: Name -> Q [Dec] -> Q [Dec]
-createDb name decs' = do
-	decs <- runQ decs'
-	--db <- foldM addDecToDb zeroTemplate decs
+createDb ansName userDecs' = do
+	userDecs <- runQ userDecs'
+	partialAddExpLists <- mapM addDec userDecs
+	let partialAddExps = concat partialAddExpLists
+	expAndVarNameTuples <- mapM 
+		(\exp -> do
+			tmpVarName <- newName "databaseTemplate";
+			return (exp, tmpVarName)
+		) 
+		partialAddExps
+	initialTmpVarName <- newName "databaseTemplate"
+	let (lastTmpVarName, addDecs) = 
+		mapAccumL mapAccumFunction initialTmpVarName expAndVarNameTuples 
 	let dbDec = [
-		SigD name (ConT 'Template)
-		--FunD name [Clause [] (NormalB $ LitE 1) []]
+		SigD ansName (ConT 'Template),
+		FunD ansName [Clause [] (NormalB $ VarE lastTmpVarName) []],
+		ValD (VarP initialTmpVarName) (NormalB $ VarE 'zeroTemplate) []
 		]
-	return (dbDec ++ decs)
+	return (userDecs ++ dbDec ++ addDecs)
+
+mapAccumFunction :: Name -> (Exp, Name) -> (Name, Dec)
+mapAccumFunction lastTmpVarName (partialAddExp, tmpVarName) = (tmpVarName, dec) where
+	dec = ValD (VarP tmpVarName) (NormalB $ AppE partialAddExp (VarE lastTmpVarName)) []
 
 addDec :: Dec -> Q [Exp]
 addDec (ValD (VarP varName) (NormalB exp) []) = addValD varName
@@ -89,5 +105,4 @@ addFK' varName = add' 'addFK varName
 -- The expressions are of type (Template -> Template)
 add' :: Name -> Name -> Q [Exp]
 add' functionName varName = return $ [AppE (VarE functionName) (VarE varName)]
-	--return [ValD (VarP name') (NormalB body) []]
 
