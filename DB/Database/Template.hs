@@ -1,6 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 module Database.Template (
-        -- Export what is needed to use it.
+        -- Export the Template Haskell parts needed to use it.
 	Q,
 	Dec,
 	-- Everything else.
