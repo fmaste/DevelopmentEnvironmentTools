@@ -50,44 +50,44 @@ createDb name decs' = do
 	return (dbDec ++ decs)
 
 addDec :: Dec -> Q [Exp]
-addDec (ValD (VarP name) (NormalB exp) []) = addValD name
+addDec (ValD (VarP varName) (NormalB exp) []) = addValD varName
 addDec _ = return []
 
 addValD :: Name -> Q [Exp]
-addValD name = do
-	info <- reify name
+addValD varName = do
+	info <- reify varName
 	case info of
-		(VarI _ t _ _) -> addVarI name t
+		(VarI _ t _ _) -> addVarI varName t
 		_ -> return []
 
 addVarI :: Name -> Type -> Q [Exp]
-addVarI name t = do
+addVarI varName t = do
 	let databaseName = ('DB.Database)
 	let tableName = ('DB.Table)
 	let fieldName = ('DB.Field)
 	let fkName = ('DB.FK)
 	case t of
-		databaseName -> addDatabase' name
-		tableName -> addTable' name
-		fieldName -> addField' name
-		fkName -> addFK' name
+		databaseName -> addDatabase' varName
+		tableName -> addTable' varName
+		fieldName -> addField' varName
+		fkName -> addFK' varName
 		_ -> return []
 
 addDatabase' :: Name -> Q [Exp]
-addDatabase' name = add' 'addDatabase name
+addDatabase' varName = add' 'addDatabase varName
 
 addTable' :: Name -> Q [Exp]
-addTable' name = add' 'addTable name
+addTable' varName = add' 'addTable varName
 
 addField' :: Name -> Q [Exp]
-addField' name = add' 'addField name
+addField' varName = add' 'addField varName
 
 addFK' :: Name -> Q [Exp]
-addFK' name = add' 'addFK name 
+addFK' varName = add' 'addFK varName 
 
 -- Return and expression that is the addSomething function partially applied.
 -- The expressions are of type (Template -> Template)
 add' :: Name -> Name -> Q [Exp]
-add' functionName name = return $ [AppE (VarE functionName) (VarE name)]
+add' functionName varName = return $ [AppE (VarE functionName) (VarE varName)]
 	--return [ValD (VarP name') (NormalB body) []]
 
